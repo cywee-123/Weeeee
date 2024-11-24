@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>HTML 專案索引</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .project-card h2 {
+            color: #2980b9;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+
+        .project-card p {
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .project-link {
+            display: inline-block;
+            text-decoration: none;
+            color: #3498db;
+            padding: 8px 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .project-link:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e0e0e0;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            color: #666;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>HTML 專案索引</h1>
+    
+    <div class="project-grid">
+        <div class="project-card">
+            <h2>手部玩球</h2>
+            <div>
+                <span class="tag">MediaPipe</span>
+                <span class="tag">Matter.js</span>
+                <span class="tag">互動</span>
+            </div>
+            <p>使用MediaPipe手部追蹤與Matter.js物理引擎,實現手部與彩球的互動效果。</p>
+            <a href="00_手部玩球.html" class="project-link">查看專案</a>
+        </div>
+
+        <div class="project-card">
+            <h2>特效辨識</h2>
+            <div>
+                <span class="tag">MediaPipe</span>
+                <span class="tag">臉部特效</span>
+            </div>
+            <p>使用MediaPipe實現臉部特效,包含愛心眼睛和粒子效果。</p>
+            <a href="00_特效辨識.html" class="project-link">查看專案</a>
+        </div>
+
+        <div class="project-card">
+            <h2>太空站動畫</h2>
+            <div>
+                <span class="tag">遊戲</span>
+                <span class="tag">動畫</span>
+                <span class="tag">互動</span>
+            </div>
+            <p>太空站保衛戰遊戲,包含物理效果、粒子系統和多種技能。</p>
+            <a href="00_誰的太空站動畫 copy.html" class="project-link">查看專案</a>
+        </div>
+
+        <div class="project-card">
+            <h2>月亮動畫</h2>
+            <div>
+                <span class="tag">動畫</span>
+                <span class="tag">互動</span>
+            </div>
+            <p>互動式月球動畫,包含流星、爆炸效果和袋鼠動畫。</p>
+            <a href="00_誰的月亮動畫.html" class="project-link">查看專案</a>
+        </div>
+
+        <div class="project-card">
+            <h2>物理約束</h2>
+            <div>
+                <span class="tag">Matter.js</span>
+                <span class="tag">物理引擎</span>
+            </div>
+            <p>Matter.js物理引擎的約束示範,展示各種物理效果。</p>
+            <a href="00_約束.html" class="project-link">查看專案</a>
+        </div>
+
+        <div class="project-card">
+            <h2>Emoji列表</h2>
+            <div>
+                <span class="tag">Unicode</span>
+                <span class="tag">表情符號</span>
+            </div>
+            <p>顯示完整的emoji列表,支援複製功能。</p>
+            <a href="00_我的emoji.html" class="project-link">查看專案</a>
+        </div>
+    </div>
+</body>
+</html> 

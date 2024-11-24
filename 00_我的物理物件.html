@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>物理引擎遊戲</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 16px;
+            font-family: Arial;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .floating-text {
+            position: absolute;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="info">物體數量: 0 | FPS: 0</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script>
+        const Engine = Matter.Engine,
+            Render = Matter.Render,
+            Runner = Matter.Runner,
+            Bodies = Matter.Bodies,
+            Composite = Matter.Composite,
+            Mouse = Matter.Mouse,
+            World = Matter.World;
+
+        // 創建引擎
+        const engine = Engine.create();
+        
+        // 創建渲染器
+        const render = Render.create({
+            element: document.body,
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false,
+                background: '#222'
+            }
+        });
+
+        // 創建邊界
+        const walls = [
+            Bodies.rectangle(window.innerWidth/2, 0, window.innerWidth, 60, { isStatic: true }),
+            Bodies.rectangle(window.innerWidth/2, window.innerHeight, window.innerWidth, 60, { isStatic: true }),
+            Bodies.rectangle(0, window.innerHeight/2, 60, window.innerHeight, { isStatic: true }),
+            Bodies.rectangle(window.innerWidth, window.innerHeight/2, 60, window.innerHeight, { isStatic: true })
+        ];
+        World.add(engine.world, walls);
+
+        // 啟動渲染器和引擎
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+        engine.timing.timeScale = 0.7;
+
+        // FPS計算
+        let frameCount = 0;
+        let fps = 0;
+        let lastTime = performance.now();
+
+        function calculateFPS() {
+            const currentTime = performance.now();
+            frameCount++;
+            
+            if (currentTime - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+        }
+
+        // 更新 emoji 數組，只保留非食用動物
+        const emojiData = [
+            { emoji: '🐶', name: '小狗' },
+            { emoji: '🐱', name: '小貓' },
+            { emoji: '🐭', name: '老鼠' },
+            { emoji: '🐹', name: '倉鼠' },
+            { emoji: '🐰', name: '兔子' },
+            { emoji: '🦊', name: '狐狸' },
+            { emoji: '🐻', name: '熊熊' },
+            { emoji: '🐼', name: '熊貓' },
+            { emoji: '🐨', name: '無尾熊' },
+            { emoji: '🐯', name: '老虎' },
+            { emoji: '🦁', name: '獅子' },
+            { emoji: '🐮', name: '青蛙' },
+            { emoji: '🐵', name: '猴子' },
+            { emoji: '🦄', name: '獨角獸' },
+            { emoji: '🐔', name: '企鵝' },
+            { emoji: '🦅', name: '老鷹' },
+            { emoji: '🦉', name: '貓頭鷹' },
+            { emoji: '🦋', name: '蝴蝶' },
+            { emoji: '🐙', name: '長頸鹿' },
+            { emoji: '🐘', name: '大象' },
+            { emoji: '🦘', name: '袋鼠' },
+            { emoji: '🦥', name: '樹懶' },
+            { emoji: '🦦', name: '水獺' },
+            { emoji: '🦝', name: '浣熊' }
+        ];
+
+        // 添加浮動文字函數
+        function createFloatingText(x, y, text) {
+            const floatingText = document.createElement('div');
+            floatingText.className = 'floating-text';
+            floatingText.textContent = text;
+            floatingText.style.left = `${x}px`;
+            floatingText.style.top = `${y}px`;
+            document.body.appendChild(floatingText);
+
+            // 1秒後移除元素
+            setTimeout(() => {
+                document.body.removeChild(floatingText);
+            }, 1000);
+        }
+
+        // 修改生成隨機形狀的函數
+        function createRandomBody(x, y) {
+            const size = 50 + Math.random() * 50;
+            const emojiInfo = emojiData[Math.floor(Math.random() * emojiData.length)];
+            
+            createFloatingText(x, y, emojiInfo.name);
+            
+            return Bodies.circle(x, y, size/2, {
+                render: {
+                    sprite: {
+                        texture: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><text x="50%" y="50%" font-size="${size}px" text-anchor="middle" dominant-baseline="middle">${emojiInfo.emoji}</text></svg>`,
+                        xScale: 1,
+                        yScale: 1
+                    }
+                },
+                friction: 0.1,
+                restitution: 0.3,
+                density: 0.001,
+                airFriction: 0.02
+            });
+        }
+
+        let isCreating = false;
+        let createInterval;
+
+        document.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                isCreating = true;
+                createInterval = setInterval(() => {
+                    const body = createRandomBody(e.clientX, e.clientY);
+                    World.add(engine.world, body);
+                }, 200);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isCreating = false;
+            clearInterval(createInterval);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isCreating) {
+                const body = createRandomBody(e.clientX, e.clientY);
+                World.add(engine.world, body);
+            }
+        });
+
+        // 更新信息顯示
+        setInterval(() => {
+            calculateFPS();
+            document.getElementById('info').textContent = 
+                `物體數量: ${engine.world.bodies.length - 4} | FPS: ${fps}`;
+        }, 100);
+    </script>
+</body>
+</html>

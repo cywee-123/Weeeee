@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>物理引擎遊戲</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 16px;
+            font-family: Arial;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .sliding-wee {
+            position: absolute;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: slideRight 1.5s ease-out forwards;
+        }
+
+        @keyframes slideRight {
+            0% {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(150px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="info">物體數量: 0 | FPS: 0</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script>
+        const Engine = Matter.Engine,
+            Render = Matter.Render,
+            Runner = Matter.Runner,
+            Bodies = Matter.Bodies,
+            Composite = Matter.Composite,
+            Mouse = Matter.Mouse,
+            MouseConstraint = Matter.MouseConstraint,
+            World = Matter.World;
+
+        const engine = Engine.create();
+        
+        const render = Render.create({
+            element: document.body,
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false,
+                background: '#222'
+            }
+        });
+
+        const walls = [
+            Bodies.rectangle(window.innerWidth/2, -30, window.innerWidth, 60, { 
+                isStatic: true,
+                render: { fillStyle: 'transparent' }
+            }),
+            Bodies.rectangle(-30, window.innerHeight/2, 60, window.innerHeight, { 
+                isStatic: true,
+                render: { fillStyle: 'transparent' }
+            }),
+            Bodies.rectangle(window.innerWidth + 30, window.innerHeight/2, 60, window.innerHeight, { 
+                isStatic: true,
+                render: { fillStyle: 'transparent' }
+            }),
+            Bodies.rectangle(window.innerWidth/2, window.innerHeight + 30, window.innerWidth, 60, { 
+                isStatic: true,
+                render: { fillStyle: 'transparent' }
+            })
+        ];
+        World.add(engine.world, walls);
+
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+        engine.timing.timeScale = 0.7;
+
+        let frameCount = 0;
+        let fps = 0;
+        let lastTime = performance.now();
+
+        function calculateFPS() {
+            const currentTime = performance.now();
+            frameCount++;
+            
+            if (currentTime - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+        }
+
+        const emojiData = [
+            { emoji: '🐶', name: '霓虹獨角獸', hue: 300 },
+            { emoji: '🐲', name: '翡翠飛龍', hue: 120 },
+            { emoji: '🦕', name: '藍寶恐龍', hue: 200 },
+            { emoji: '🐉', name: '赤焰龍王', hue: 0 },
+            { emoji: '🦮', name: '金光神犬', hue: 45 },
+            { emoji: '🐈', name: '紫晶魔貓', hue: 280 },
+            { emoji: '🦁', name: '橙焰獅王', hue: 30 },
+            { emoji: '🐼', name: '極光熊貓', hue: 160 },
+            { emoji: '🦊', name: '粉晶狐仙', hue: 330 },
+            { emoji: '🐯', name: '青玉靈虎', hue: 180 },
+            { emoji: '🦅', name: '赤銅神鷹', hue: 15 },
+            { emoji: '🐸', name: '翠玉蛙仙', hue: 140 }
+        ];
+
+        function createSlidingWee(x, y) {
+            const wee = document.createElement('div');
+            wee.className = 'sliding-wee';
+            wee.textContent = 'wee';
+            wee.style.left = `${x}px`;
+            wee.style.top = `${y}px`;
+            document.body.appendChild(wee);
+
+            setTimeout(() => {
+                document.body.removeChild(wee);
+            }, 1500);
+        }
+
+        function createRandomBody(x, y) {
+            const size = 50 + Math.random() * 50;
+            const emojiInfo = emojiData[Math.floor(Math.random() * emojiData.length)];
+            
+            const body = Bodies.circle(x, y, size/2, {
+                render: {
+                    sprite: {
+                        texture: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><defs><filter id="colorize"><feColorMatrix type="hueRotate" values="${emojiInfo.hue}"/><feColorMatrix type="saturate" values="2"/></filter></defs><text x="50%" y="50%" font-size="${size*0.8}px" text-anchor="middle" dominant-baseline="middle" style="filter: url(%23colorize)">${emojiInfo.emoji}</text></svg>`,
+                        xScale: 1,
+                        yScale: 1
+                    }
+                },
+                friction: 0.1,
+                restitution: 0.6,
+                density: 0.001,
+                airFriction: 0.02
+            });
+            
+            return body;
+        }
+
+        let isCreating = false;
+        let createInterval;
+
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: {
+                    visible: false
+                }
+            }
+        });
+
+        World.add(engine.world, mouseConstraint);
+        render.mouse = mouse;
+
+        let lastWeeTime = 0;
+
+        Matter.Events.on(engine, 'collisionStart', function(event) {
+            const currentTime = Date.now();
+            if (currentTime - lastWeeTime > 100) {
+                event.pairs.forEach((pair) => {
+                    if (pair.bodyA.id !== 1 && pair.bodyB.id !== 1) {
+                        const collision = pair.collision;
+                        const position = collision.supports[0] || { x: collision.bodyA.position.x, y: collision.bodyA.position.y };
+                        createSlidingWee(position.x, position.y);
+                        lastWeeTime = currentTime;
+                    }
+                });
+            }
+        });
+
+        document.addEventListener('mousedown', (e) => {
+            if (e.button === 0 && !mouseConstraint.body) {
+                isCreating = true;
+                createInterval = setInterval(() => {
+                    const body = createRandomBody(e.clientX, e.clientY);
+                    World.add(engine.world, body);
+                }, 200);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isCreating = false;
+            clearInterval(createInterval);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isCreating && e.buttons === 1 && !mouseConstraint.body) {
+                const body = createRandomBody(e.clientX, e.clientY);
+                World.add(engine.world, body);
+            }
+        });
+
+        setInterval(() => {
+            calculateFPS();
+            document.getElementById('info').textContent = 
+                `物體數量: ${engine.world.bodies.length - 4} | FPS: ${fps}`;
+        }, 100);
+
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>

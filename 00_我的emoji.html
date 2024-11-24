@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Emoji 列表</title>
+    <style>
+        .emoji-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .emoji-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .emoji-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .emoji {
+            font-size: 2em;
+        }
+
+        .code {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="emoji-container" id="emojiContainer"></div>
+
+    <script>
+        function createEmojiList() {
+            const container = document.getElementById('emojiContainer');
+            
+            // 生成從 0x1F300 到 0x1F9FF 的 emoji
+            for (let i = 0x1F300; i <= 0x1F9FF; i++) {
+                try {
+                    const emoji = String.fromCodePoint(i);
+                    const div = document.createElement('div');
+                    div.className = 'emoji-item';
+                    
+                    div.innerHTML = `
+                        <span class="emoji">${emoji}</span>
+                        <span class="code">U+${i.toString(16).toUpperCase()}</span>
+                    `;
+
+                    div.onclick = function() {
+                        navigator.clipboard.writeText(emoji)
+                            .then(() => {
+                                // 複製成功時的視覺反饋
+                                div.style.backgroundColor = '#90EE90';
+                                setTimeout(() => {
+                                    div.style.backgroundColor = '';
+                                }, 500);
+                            })
+                            .catch(err => {
+                                console.error('複製失敗:', err);
+                            });
+                    };
+
+                    container.appendChild(div);
+                } catch (e) {
+                    continue; // 跳過無效的 emoji 代碼點
+                }
+            }
+        }
+
+        // 頁面載入時執行
+        window.onload = createEmojiList;
+    </script>
+</body>
+</html>

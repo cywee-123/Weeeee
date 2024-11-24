@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a2a;
+            cursor: none;
+        }
+        
+        #moon {
+            position: fixed;
+            font-size: 200px;
+            pointer-events: none;
+            transition: transform 0.1s ease;
+            z-index: 1000;
+        }
+        
+        .star {
+            position: fixed;
+            font-size: 24px;
+            animation: twinkle 1.5s infinite;
+        }
+
+        .uranus {
+            position: fixed;
+            font-size: 100px; /* 天王星大小 */
+            animation: rotate 20s linear infinite;
+        }
+        
+        .shooting-star {
+            position: fixed;
+            width: 200px;
+            height: 8px;
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,1) 0%, 
+                rgba(255,255,255,0.8) 50%, 
+                rgba(255,255,255,0) 100%);
+            box-shadow: 
+                0 0 20px #fff,
+                0 0 40px #fff,
+                0 0 60px #fff;
+            z-index: 150;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes shoot {
+            0% {
+                transform: translateX(0) translateY(0) rotate(45deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(2000px) translateY(2000px) rotate(45deg);
+                opacity: 0;
+            }
+        }
+
+        .firework-particle {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 160;
+            filter: blur(2px);
+        }
+
+        #earth-container {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #earth {
+            font-size: 300px;
+            line-height: 1;
+        }
+
+        #kangaroo {
+            position: absolute;
+            font-size: 40px;     /* 調整袋鼠大小 */
+            top: 25%;            /* 調整袋鼠位置 */
+            z-index: 101;
+            transform: scaleX(-1);  /* 預設面向左邊 */
+            animation: kangarooHop 1s infinite ease-in-out;
+        }
+
+        @keyframes kangarooHop {
+            0%, 100% { 
+                transform: scaleX(-1) translateY(0); 
+            }
+            50% { 
+                transform: scaleX(-1) translateY(-10px);  /* 跳躍高度 */
+            }
+        }
+
+        /* 添加驚嚇動畫 */
+        @keyframes kangarooScare {
+            0% { transform: scaleX(-1) translateY(0); }
+            25% { transform: scaleX(-1) translateY(-15px) rotate(-10deg); }
+            50% { transform: scaleX(-1) translateY(-10px) rotate(10deg); }
+            75% { transform: scaleX(-1) translateY(-5px) rotate(-5deg); }
+            100% { transform: scaleX(-1) translateY(0); }
+        }
+
+        .smoke {
+            position: fixed;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            filter: blur(8px);
+            z-index: 155;
+        }
+    </style>
+</head>
+<body>
+    <div id="earth-container">
+        <div id="earth">🌍</div>
+        <div id="kangaroo">🦘</div>
+    </div>
+    <div id="moon">🌑</div>
+    <div class="uranus">⛢</div>
+
+    <script>
+        const earthContainer = document.getElementById('earth-container');
+        const earth = document.getElementById('earth');
+        const kangaroo = document.getElementById('kangaroo');
+        const moon = document.getElementById('moon');
+        const earthEmojis = ['🌍', '🌎', '🌏'];
+        const moonPhases = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
+        let currentEarthPhase = 0;
+        let currentMoonPhase = 0;
+        let lastMouseX = 0;
+        let kangarooDirection = -1; // -1 左邊, 1 右邊
+        
+        // 地球动画
+        setInterval(() => {
+            currentEarthPhase = (currentEarthPhase + 1) % earthEmojis.length;
+            earth.textContent = earthEmojis[currentEarthPhase];
+        }, 500);
+
+        // 月球动画
+        setInterval(() => {
+            currentMoonPhase = (currentMoonPhase + 1) % moonPhases.length;
+            moon.textContent = moonPhases[currentMoonPhase];
+        }, 200);
+
+        // 月球跟随鼠标移动并调整层级
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            // 计算月球位置
+            moon.style.left = (mouseX - 100) + 'px';
+            moon.style.top = (mouseY - 100) + 'px';
+            
+            // 判断移动方向并调整z-index
+            if (mouseX > lastMouseX) {
+                // 向右移动，月球在地球下面
+                moon.style.zIndex = "90";
+            } else if (mouseX < lastMouseX) {
+                // 向左移动，月球在地球上面
+                moon.style.zIndex = "110";
+            }
+            
+            lastMouseX = mouseX;
+            
+            // 检查与流星的碰撞
+            document.querySelectorAll('.shooting-star').forEach(star => {
+                if (checkCollision(moon, star)) {
+                    const rect = star.getBoundingClientRect();
+                    const position = {
+                        left: rect.left + rect.width / 2,
+                        top: rect.top + rect.height / 2
+                    };
+                    createFirework(position);
+                    star.remove();
+                }
+            });
+        });
+
+        // 添加鼠标移动速度检测来调整月相变化
+        let lastTime = Date.now();
+        let moveSpeed = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            const currentTime = Date.now();
+            const deltaTime = currentTime - lastTime;
+            const deltaX = e.clientX - lastMouseX;
+            
+            // 计算移动速度
+            moveSpeed = Math.abs(deltaX / deltaTime);
+            
+            // 根据移动速度调整月相变化速度
+            const baseInterval = 200; // 基础变化间隔
+            const newInterval = Math.max(50, baseInterval - (moveSpeed * 100));
+            
+            // 清除旧的interval并设置新的
+            clearInterval(moonPhaseInterval);
+            moonPhaseInterval = setInterval(() => {
+                currentMoonPhase = (currentMoonPhase + 1) % moonPhases.length;
+                moon.textContent = moonPhases[currentMoonPhase];
+            }, newInterval);
+            
+            lastTime = currentTime;
+            lastMouseX = e.clientX;
+        });
+
+        // 初始化月相变化interval
+        let moonPhaseInterval = setInterval(() => {
+            currentMoonPhase = (currentMoonPhase + 1) % moonPhases.length;
+            moon.textContent = moonPhases[currentMoonPhase];
+        }, 200);
+
+        // 創建彩色星星
+        function createStar() {
+            const colors = [
+                '#fff', '#ffd700', '#87ceeb', 
+                '#ff69b4', '#7fffd4', '#dda0dd'
+            ];
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * window.innerWidth + 'px';
+            star.style.top = Math.random() * window.innerHeight + 'px';
+            star.textContent = '★';
+            star.style.color = colors[Math.floor(Math.random() * colors.length)];
+            star.style.animationDelay = Math.random() * 2 + 's';
+            document.body.appendChild(star);
+        }
+
+        // 創建彩色流星
+        function createShootingStar() {
+            const colors = ['#ff0', '#f62', '#f24', '#24f', '#2ff', '#ff69b4', '#7fffd4'];
+            const star = document.createElement('div');
+            star.className = 'shooting-star';
+            
+            // 隨機選擇顏色
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            star.style.background = `linear-gradient(90deg, 
+                ${color} 0%, 
+                ${color}80 50%, 
+                ${color}00 100%)`;
+            star.style.boxShadow = `
+                0 0 20px ${color},
+                0 0 40px ${color}`;
+
+            // 獲取地球位置
+            const earthRect = earth.getBoundingClientRect();
+            const earthCenter = {
+                x: earthRect.left + earthRect.width / 2,
+                y: earthRect.top + earthRect.height / 2
+            };
+
+            // 從四周隨機位置生成
+            let startX, startY;
+            const side = Math.floor(Math.random() * 4);
+            switch(side) {
+                case 0: // 上
+                    startX = Math.random() * window.innerWidth;
+                    startY = -100;
+                    break;
+                case 1: // 右
+                    startX = window.innerWidth + 100;
+                    startY = Math.random() * window.innerHeight;
+                    break;
+                case 2: // 下
+                    startX = Math.random() * window.innerWidth;
+                    startY = window.innerHeight + 100;
+                    break;
+                case 3: // 左
+                    startX = -100;
+                    startY = Math.random() * window.innerHeight;
+                    break;
+            }
+
+            star.style.left = startX + 'px';
+            star.style.top = startY + 'px';
+
+            // 計算角度指向地球中心
+            const angle = Math.atan2(earthCenter.y - startY, earthCenter.x - startX);
+            star.style.transform = `rotate(${angle}rad)`;
+
+            document.body.appendChild(star);
+
+            // 計算到地球中心的距離
+            const distance = Math.sqrt(
+                Math.pow(earthCenter.x - startX, 2) + 
+                Math.pow(earthCenter.y - startY, 2)
+            );
+
+            // 設定動畫時間基於距離
+            const duration = distance * 2; // 速度調整係數
+
+            const animation = star.animate([
+                { left: startX + 'px', top: startY + 'px' },
+                { left: earthCenter.x + 'px', top: earthCenter.y + 'px' }
+            ], {
+                duration: duration,
+                easing: 'linear'
+            });
+
+            // 持續檢查與地球的距離
+            const checkCollision = setInterval(() => {
+                const starRect = star.getBoundingClientRect();
+                const starCenter = {
+                    x: starRect.left + starRect.width / 2,
+                    y: starRect.top + starRect.height / 2
+                };
+
+                // 計算與地球中心的距離
+                const currentDistance = Math.sqrt(
+                    Math.pow(earthCenter.x - starCenter.x, 2) + 
+                    Math.pow(earthCenter.y - starCenter.y, 2)
+                );
+
+                // 如果距離小於地球半徑，觸發爆炸
+                if (currentDistance < earthRect.width / 2) {
+                    clearInterval(checkCollision);
+                    animation.cancel(); // 立即停止流星動畫
+                    createExplosion({x: starCenter.x, y: starCenter.y}, color);
+                    star.remove();
+                }
+            }, 10); // 更頻繁的檢查
+
+            animation.onfinish = () => {
+                clearInterval(checkCollision);
+                star.remove();
+            };
+        }
+
+        // 創建彩色爆炸效果
+        function createExplosion(position, baseColor) {
+            kangarooReact();
+            // 創建煙花粒子
+            for (let i = 0; i < 80; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework-particle';
+                
+                const color = baseColor;
+                particle.style.backgroundColor = color;
+                particle.style.boxShadow = `0 0 ${5 + Math.random() * 10}px ${color}`;
+                
+                particle.style.left = position.x + 'px';
+                particle.style.top = position.y + 'px';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 8 + Math.random() * 12;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity;
+                
+                document.body.appendChild(particle);
+                
+                particle.animate([
+                    { 
+                        transform: 'translate(0, 0) scale(1.5)',
+                        opacity: 1 
+                    },
+                    { 
+                        transform: `translate(${vx * 30}px, ${vy * 30}px) scale(0.8)`,
+                        opacity: 0.7 
+                    },
+                    { 
+                        transform: `translate(${vx * 40}px, ${vy * 40 + 60}px) scale(0)`,
+                        opacity: 0 
+                    }
+                ], {
+                    duration: 2000,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }).onfinish = () => particle.remove();
+            }
+
+            // 創建煙霧效果
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const smoke = document.createElement('div');
+                    smoke.className = 'smoke';
+                    const size = 30 + Math.random() * 50;
+                    smoke.style.width = size + 'px';
+                    smoke.style.height = size + 'px';
+                    smoke.style.left = (position.x - size/2) + 'px';
+                    smoke.style.top = (position.y - size/2) + 'px';
+                    
+                    document.body.appendChild(smoke);
+                    
+                    smoke.animate([
+                        { 
+                            transform: 'scale(1)',
+                            opacity: 0.3 
+                        },
+                        { 
+                            transform: 'scale(2)',
+                            opacity: 0 
+                        }
+                    ], {
+                        duration: 1500,
+                        easing: 'ease-out'
+                    }).onfinish = () => smoke.remove();
+                }, i * 80);
+            }
+        }
+
+        // 初始化星星
+        for(let i = 0; i < 50; i++) {
+            createStar();
+        }
+
+        // 每1.5秒生成一個新流星
+        setInterval(createShootingStar, 1500);
+
+        // 袋鼠隨機改變方向
+        setInterval(() => {
+            if (Math.random() > 0.7) {  // 30%機率改變方向
+                kangarooDirection *= -1;
+                kangaroo.style.transform = `scaleX(${kangarooDirection})`;
+            }
+        }, 2000);
+
+        // 當流星撞擊時，袋鼠反應
+        function kangarooReact() {
+            kangaroo.style.animation = 'kangarooScare 0.8s ease-in-out';
+            
+            // 隨機決定是否轉向逃跑
+            if (Math.random() > 0.5) {
+                kangarooDirection *= -1;
+                setTimeout(() => {
+                    kangaroo.style.transform = `scaleX(${kangarooDirection})`;
+                }, 100);
+            }
+            
+            // 動畫結束後恢復跳躍
+            setTimeout(() => {
+                kangaroo.style.animation = 'kangarooHop 1s infinite ease-in-out';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

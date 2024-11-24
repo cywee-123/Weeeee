@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>太空站保衛戰</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a2a;
+            cursor: none;
+        }
+        
+        #moon {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+            transition: transform 0.1s ease;
+            z-index: 1000;
+            background-image: url('./image/station1.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .bullet {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 95;
+            box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #0ff;
+        }
+
+        .space-monster {
+            position: fixed;
+            font-size: 40px;
+            z-index: 95;
+            transition: transform 0.3s ease;
+            animation: monsterFloat 3s infinite ease-in-out;
+        }
+
+        .health-bar {
+            position: fixed;
+            height: 20px;
+            background: #333;
+            border: 2px solid #fff;
+            z-index: 1000;
+        }
+
+        .health-bar-fill {
+            height: 100%;
+            background: #f00;
+            transition: width 0.3s ease;
+        }
+
+        .player-health {
+            top: 20px;
+            left: 20px;
+            width: 200px;
+        }
+
+        .monster-health {
+            width: 50px;
+            height: 5px;
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .score-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 32px;
+            color: #fff;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            z-index: 1000;
+            font-weight: bold;
+        }
+
+        .game-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            z-index: 2000;
+            border: 2px solid #4fc3f7;
+            box-shadow: 0 0 20px #4fc3f7;
+        }
+
+        .controls-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+
+        .controls-info h2 {
+            color: #4fc3f7;
+            margin-bottom: 15px;
+        }
+
+        .skill-descriptions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .skill-item {
+            padding: 15px;
+            background: rgba(79, 195, 247, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .skill-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(79, 195, 247, 0.2);
+            border-radius: 50%;
+            animation: iconPulse 2s infinite;
+        }
+
+        .spread-shot {
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes iconPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .skill-detail {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .music-control {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(79, 195, 247, 0.3);
+        }
+
+        .music-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .music-button {
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .music-button:hover {
+            transform: scale(1.1);
+            background: #45a049;
+        }
+
+        @keyframes monsterFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        #earth {
+            position: fixed;
+            font-size: 150px;
+            left: 50px;
+            bottom: 50px;
+            z-index: 90;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .star {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: twinkle 1.5s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        /* 不同顏色的星星 */
+        .star-white { background-color: #fff; box-shadow: 0 0 10px #fff; }
+        .star-blue { background-color: #4fc3f7; box-shadow: 0 0 10px #4fc3f7; }
+        .star-purple { background-color: #e040fb; box-shadow: 0 0 10px #e040fb; }
+        .star-yellow { background-color: #ffeb3b; box-shadow: 0 0 10px #ffeb3b; }
+        .star-pink { background-color: #ff4081; box-shadow: 0 0 10px #ff4081; }
+
+        .cooldown-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: #fff;
+            font-size: 16px;
+            text-shadow: 0 0 10px #00ff00;
+            z-index: 1000;
+        }
+
+        .shield {
+            position: fixed;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: 3px solid rgba(0, 255, 255, 0.5);
+            pointer-events: none;
+            z-index: 999;
+            animation: shieldPulse 1.5s infinite;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.3),
+                inset 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .special-bullet {
+            background: #ff00ff !important;
+            box-shadow: 0 0 10px #ff00ff !important;
+        }
+
+        .homing-missile {
+            width: 12px !important;
+            height: 12px !important;
+            background: #ff4081 !important;
+            box-shadow: 0 0 15px #ff4081 !important;
+            border-radius: 50% !important;
+            animation: missilePulse 0.5s infinite;
+        }
+
+        @keyframes missilePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .laser-beam {
+            position: fixed;
+            width: 1000px;
+            height: 6px;
+            background: linear-gradient(90deg, 
+                rgba(255,0,0,0) 0%,
+                rgba(255,0,0,0.8) 20%,
+                rgba(255,255,255,1) 50%,
+                rgba(255,0,0,0.8) 80%,
+                rgba(255,0,0,0) 100%
+            );
+            transform-origin: left center;
+            z-index: 1000;
+            animation: laserPulse 0.1s infinite;
+        }
+
+        @keyframes laserPulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        .bullet-impact {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(0,255,255,0.8) 0%, rgba(0,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            animation: impact 0.3s ease-out forwards;
+        }
+
+        @keyframes impact {
+            0% {
+                transform: scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .spread-bullet {
+            background: #ff00ff !important;
+            box-shadow: 0 0 10px #ff00ff !important;
+        }
+
+        .super-missile {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: #ff4081;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 20px #ff4081,
+                0 0 40px #ff4081;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .piercing-beam {
+            position: fixed;
+            width: 30px;
+            height: 10px;
+            background: linear-gradient(90deg, 
+                rgba(0,255,255,0.8) 0%,
+                rgba(0,255,255,1) 50%,
+                rgba(0,255,255,0.8) 100%
+            );
+            border-radius: 5px;
+            box-shadow: 0 0 20px #00ffff;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .explosion {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, 
+                rgba(255,64,129,1) 0%,
+                rgba(255,64,129,0.8) 30%,
+                rgba(255,64,129,0) 70%
+            );
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: explode 0.5s ease-out forwards;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        .power-bullet {
+            position: fixed;
+            width: 18px;
+            height: 18px;
+            background: #ff69b4;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 20px #ff69b4,
+                0 0 40px #ff69b4;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .super-bullet {
+            position: fixed;
+            width: 25px;
+            height: 25px;
+            background: #ff1493;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 30px #ff1493,
+                0 0 50px #ff1493;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .bullet-explosion {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, 
+                rgba(255,64,129,1) 0%,
+                rgba(255,64,129,0.5) 50%,
+                rgba(255,64,129,0) 100%
+            );
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: bulletExplode 0.3s ease-out forwards;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        @keyframes bulletExplode {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        /* 添加發光軌跡效果 */
+        .power-bullet::after,
+        .super-bullet::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: 50%;
+            filter: blur(5px);
+            transform: translate(-50%, -50%);
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="earth">🌍</div>
+    <div id="moon"></div>
+
+    <script>
+        // 音樂控制
+        let bgMusic = new Audio('./music/在太空打架.mp3');
+        bgMusic.loop = true; // 循環播放
+        let isMusicEnabled = false;
+
+        // 遊戲狀態
+        const gameState = {
+            score: 0,
+            maxScore: 20,
+            playerHealth: 100,
+            isPlaying: false,
+            gameStarted: false
+        };
+
+        // 技能系統設置
+        const cooldowns = {
+            '1': 5000,   // 散射彈冷卻5秒
+            '2': 8000,   // 追蹤彈冷卻8秒
+            '3': 12000   // 雷射光束冷卻12秒
+        };
+
+        const lastUsed = {
+            '1': 0,
+            '2': 0,
+            '3': 0
+        };
+
+        // 初始化遊戲
+        function init() {
+            createStars(); // 創建星背景
+            showStartScreen();
+            setupGameControls();
+        }
+
+        // 顯示開始畫面
+        function showStartScreen() {
+            const startScreen = document.createElement('div');
+            startScreen.className = 'game-screen';
+            startScreen.innerHTML = `
+                <h1>太空站保衛戰</h1>
+                <p>擊敗外星怪物，保護太空站！</p>
+                <p>目標分數：${gameState.maxScore}分</p>
+                <div class="controls-info">
+                    <h2>技能說明</h2>
+                    <div class="skill-descriptions">
+                        <div class="skill-item">
+                            <div class="skill-icon spread-shot">🔄</div>
+                            <p>按1：環形散射</p>
+                            <p class="skill-detail">發射8發環形子彈 (冷卻5秒)</p>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-icon">🎯</div>
+                            <p>按2：強力光球</p>
+                            <p class="skill-detail">發射高傷害光球 (冷卻8秒)</p>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-icon">🌟</div>
+                            <p>按3：超級光球</p>
+                            <p class="skill-detail">發射超大威力光球 (冷卻12秒)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="music-control">
+                    <p>是否要播放背景音樂？</p>
+                    <div class="music-buttons">
+                        <button class="music-button" onclick="handleMusicChoice(true)">是</button>
+                        <button class="music-button" onclick="handleMusicChoice(false)">否</button>
+                    </div>
+                    <p style="margin-top: 20px; font-size: 14px;">提示：遊戲中按右鍵可以開關音樂</p>
+                </div>
+            `;
+            document.body.appendChild(startScreen);
+        }
+
+        // 處理音樂選擇
+        function handleMusicChoice(choice) {
+            isMusicEnabled = choice;
+            if (choice) {
+                bgMusic.play();
+            }
+            startGame();
+        }
+
+        // 開始遊戲
+        function startGame() {
+            document.querySelector('.game-screen').remove();
+            gameState.isPlaying = true;
+            gameState.gameStarted = true;
+            gameState.score = 0;
+            gameState.playerHealth = 100;
+            
+            createHealthBars();
+            createScoreDisplay();
+            startMonsterSpawning();
+            gameLoop();
+        }
+
+        // 創建血條
+        function createHealthBars() {
+            const playerHealth = document.createElement('div');
+            playerHealth.className = 'health-bar player-health';
+            playerHealth.innerHTML = '<div class="health-bar-fill" style="width: 100%"></div>';
+            document.body.appendChild(playerHealth);
+        }
+
+        // 創建分數顯示
+        function createScoreDisplay() {
+            const scoreDisplay = document.createElement('div');
+            scoreDisplay.className = 'score-display';
+            scoreDisplay.textContent = `分數: ${gameState.score}`;
+            document.body.appendChild(scoreDisplay);
+        }
+
+        // 設置滑鼠移動
+        function setupGameControls() {
+            const moon = document.getElementById('moon');
+            
+            // 滑鼠移動控制太空站
+            document.addEventListener('mousemove', (e) => {
+                moon.style.left = (e.clientX - moon.offsetWidth / 2) + 'px';
+                moon.style.top = (e.clientY - moon.offsetHeight / 2) + 'px';
+            });
+
+            // 右鍵點擊控制音樂
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (isMusicEnabled) {
+                    if (bgMusic.paused) {
+                        bgMusic.play();
+                    } else {
+                        bgMusic.pause();
+                    }
+                }
+            });
+
+            // 左鍵點擊發射子彈
+            document.addEventListener('click', (e) => {
+                if (gameState.isPlaying) {
+                    shootBullet(e.clientX, e.clientY);
+                }
+            });
+
+            // 技能按鍵控制
+            document.addEventListener('keydown', (e) => {
+                if (!gameState.isPlaying) return;
+                
+                const now = Date.now();
+                switch(e.key) {
+                    case '1':
+                        if (now - lastUsed['1'] >= cooldowns['1']) {
+                            activateShield();
+                            lastUsed['1'] = now;
+                        }
+                        break;
+                    case '2':
+                        if (now - lastUsed['2'] >= cooldowns['2']) {
+                            shootPowerBullet();
+                            lastUsed['2'] = now;
+                        }
+                        break;
+                    case '3':
+                        if (now - lastUsed['3'] >= cooldowns['3']) {
+                            shootSuperBullet();
+                            lastUsed['3'] = now;
+                        }
+                        break;
+                }
+            });
+        }
+
+        // 發射子彈
+        function shootBullet(targetX, targetY) {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            
+            const moon = document.getElementById('moon');
+            const moonRect = moon.getBoundingClientRect();
+            const startX = moonRect.left + moonRect.width/2;
+            const startY = moonRect.top + moonRect.height/2;
+            
+            bullet.style.left = startX + 'px';
+            bullet.style.top = startY + 'px';
+            document.body.appendChild(bullet);
+
+            const angle = Math.atan2(targetY - startY, targetX - startX);
+            const speed = 10;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+
+            const bulletInterval = setInterval(() => {
+                const currentX = parseFloat(bullet.style.left);
+                const currentY = parseFloat(bullet.style.top);
+                
+                bullet.style.left = (currentX + vx) + 'px';
+                bullet.style.top = (currentY + vy) + 'px';
+
+                // 檢查碰撞
+                checkBulletCollisions(bullet);
+
+                // 檢查是否超出螢幕
+                if (currentX < 0 || currentX > window.innerWidth || 
+                    currentY < 0 || currentY > window.innerHeight) {
+                    clearInterval(bulletInterval);
+                    bullet.remove();
+                }
+            }, 16);
+        }
+
+        // 生成怪物
+        function startMonsterSpawning() {
+            // 初始生成更多怪物
+            for(let i = 0; i < 8; i++) { // 改為 8 初始怪物
+                createMonster();
+            }
+
+            // 每隔一段時間檢查並維持怪物數量
+            const spawnInterval = setInterval(() => {
+                if (!gameState.isPlaying) {
+                    clearInterval(spawnInterval);
+                    return;
+                }
+
+                // 獲取當前怪物數量
+                const currentMonsters = document.querySelectorAll('.space-monster').length;
+                
+                // 如果怪物數量少於8個，則生成新的怪物
+                const targetMonsterCount = 8; // 維持 8 個怪物
+                if (currentMonsters < targetMonsterCount) {
+                    // 一次性補充到目標數量
+                    for (let i = currentMonsters; i < targetMonsterCount; i++) {
+                        createMonster();
+                    }
+                }
+            }, 800); // 縮短檢查間隔為 800ms
+        }
+
+        // 創建怪物
+        function createMonster() {
+            const monster = document.createElement('div');
+            monster.className = 'space-monster';
+            monster.textContent = '👾';
+            monster.dataset.health = 50;
+
+            // 添加怪物血條
+            const healthBar = document.createElement('div');
+            healthBar.className = 'health-bar monster-health';
+            healthBar.innerHTML = '<div class="health-bar-fill" style="width: 100%"></div>';
+            monster.appendChild(healthBar);
+
+            // 只從右側生成
+            const x = window.innerWidth;
+            const y = Math.random() * (window.innerHeight - 100); // 避免太靠近邊緣
+            
+            monster.style.left = x + 'px';
+            monster.style.top = y + 'px';
+            document.body.appendChild(monster);
+
+            moveMonster(monster);
+        }
+
+        // 怪物移動
+        function moveMonster(monster) {
+            let moveLeft = true; // 控制左右移動
+            const baseSpeed = 2; // 基礎移動速度
+
+            const moveInterval = setInterval(() => {
+                if (!gameState.isPlaying) {
+                    clearInterval(moveInterval);
+                    return;
+                }
+
+                const monsterRect = monster.getBoundingClientRect();
+                
+                // 基本移動
+                if (moveLeft) {
+                    monster.style.left = (monsterRect.left - baseSpeed) + 'px';
+                    if (monsterRect.left <= 0) {
+                        moveLeft = false;
+                    }
+                } else {
+                    monster.style.left = (monsterRect.left + baseSpeed) + 'px';
+                    if (monsterRect.right >= window.innerWidth) {
+                        moveLeft = true;
+                    }
+                }
+
+                // 輕微的上下浮動（保持原有的浮動動畫）
+                if (Math.random() < 0.02) { // 2% 的攻擊機率
+                    shootMonsterBullet(monster);
+                }
+            }, 50);
+
+            monster.addEventListener('remove', () => clearInterval(moveInterval));
+        }
+
+        // 怪物射擊
+        function shootMonsterBullet(monster) {
+            const monsterRect = monster.getBoundingClientRect();
+            const moonRect = document.getElementById('moon').getBoundingClientRect();
+            
+            const startX = monsterRect.left + monsterRect.width/2;
+            const startY = monsterRect.top + monsterRect.height/2;
+            const targetX = moonRect.left + moonRect.width/2;
+            const targetY = moonRect.top + moonRect.height/2;
+            
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet monster-bullet';
+            bullet.style.left = startX + 'px';
+            bullet.style.top = startY + 'px';
+            document.body.appendChild(bullet);
+
+            const angle = Math.atan2(targetY - startY, targetX - startX);
+            const speed = 5;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+
+            const bulletInterval = setInterval(() => {
+                const currentX = parseFloat(bullet.style.left);
+                const currentY = parseFloat(bullet.style.top);
+                
+                bullet.style.left = (currentX + vx) + 'px';
+                bullet.style.top = (currentY + vy) + 'px';
+
+                // 檢查是否擊中玩家
+                if (checkCollision(bullet, document.getElementById('moon'))) {
+                    updateHealth('player', 2);
+                    clearInterval(bulletInterval);
+                    bullet.remove();
+                }
+
+                // 檢查是否超出螢幕
+                if (currentX < 0 || currentX > window.innerWidth || 
+                    currentY < 0 || currentY > window.innerHeight) {
+                    clearInterval(bulletInterval);
+                    bullet.remove();
+                }
+            }, 16);
+        }
+
+        // 修改子彈碰撞檢測
+        function checkBulletCollisions(bullet) {
+            const moon = document.getElementById('moon');
+            const moonRect = moon.getBoundingClientRect();
+            const shield = document.querySelector('.shield');
+
+            // 如果是怪物的子彈
+            if (bullet.classList.contains('monster-bullet')) {
+                // 檢查是否有護盾
+                if (shield && checkCollision(bullet, shield)) {
+                    // 子彈碰到護盾就直接消失
+                    bullet.remove();
+                    
+                    // 可以添加一個視覺效果來顯示子彈被擋住
+                    const impact = document.createElement('div');
+                    impact.className = 'bullet-impact';
+                    impact.style.left = bullet.style.left;
+                    impact.style.top = bullet.style.top;
+                    document.body.appendChild(impact);
+                    
+                    // 短暫後移除視覺效果
+                    setTimeout(() => impact.remove(), 300);
+                    return;
+                }
+                
+                // 如果沒有護盾或子彈沒碰到護盾，檢查是否碰到太空站
+                if (checkCollision(bullet, moon)) {
+                    updateHealth('player', 2);
+                    bullet.remove();
+                }
+            } 
+            // 如果是玩家的子彈
+            else {
+                document.querySelectorAll('.space-monster').forEach(monster => {
+                    if (checkCollision(bullet, monster)) {
+                        handleMonsterHit(monster, 3);
+                        bullet.remove();
+                    }
+                });
+            }
+        }
+
+        // 處理怪物受傷的函數
+        function handleMonsterHit(monster, damage) {
+            const monsterHealth = parseInt(monster.dataset.health) - damage;
+            monster.dataset.health = monsterHealth;
+            
+            // 更新怪物血條
+            const healthFill = monster.querySelector('.health-bar-fill');
+            healthFill.style.width = `${(monsterHealth / 50) * 100}%`;
+
+            if (monsterHealth <= 0) {
+                monster.remove();
+                updateScore(5);
+            }
+        }
+
+        // 碰撞檢測
+        function checkCollision(elem1, elem2) {
+            const rect1 = elem1.getBoundingClientRect();
+            const rect2 = elem2.getBoundingClientRect();
+            
+            return !(rect1.right < rect2.left || 
+                    rect1.left > rect2.right || 
+                    rect1.bottom < rect2.top || 
+                    rect1.top > rect2.bottom);
+        }
+
+        // 新分數
+        function updateScore(points) {
+            gameState.score += points;
+            document.querySelector('.score-display').textContent = `分數: ${gameState.score}`;
+            
+            if (gameState.score >= gameState.maxScore) {
+                endGame('win');
+            }
+        }
+
+        // 更新血量
+        function updateHealth(target, damage) {
+            if (target === 'player') {
+                gameState.playerHealth -= damage;
+                document.querySelector('.player-health .health-bar-fill').style.width = 
+                    `${gameState.playerHealth}%`;
+                
+                if (gameState.playerHealth <= 0) {
+                    endGame('lose');
+                }
+            }
+        }
+
+        // 結束遊戲
+        function endGame(result) {
+            gameState.isPlaying = false;
+            bgMusic.pause(); // 停止音樂
+            
+            // 清除所有怪物和子彈
+            document.querySelectorAll('.space-monster, .bullet').forEach(elem => elem.remove());
+            
+            // 顯示結束畫面
+            const endScreen = document.createElement('div');
+            endScreen.className = 'game-screen';
+            endScreen.innerHTML = `
+                <h1>${result === 'win' ? '勝利！' : '失敗！'}</h1>
+                <p>最終得分：${gameState.score}</p>
+                <button class="game-button" onclick="restartGame()">重新開始</button>
+            `;
+            document.body.appendChild(endScreen);
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+            // 清除所有現有的遊戲元素
+            document.querySelectorAll('.space-monster, .bullet, .shield').forEach(elem => elem.remove());
+            document.querySelector('.game-screen')?.remove();
+            document.querySelector('.player-health')?.remove();
+            document.querySelector('.score-display')?.remove();
+
+            // 重置遊戲態
+            gameState.score = 0;
+            gameState.playerHealth = 100;
+            gameState.isPlaying = true;
+            
+            // 如果之前開啟了音樂，重新開始播放
+            if (isMusicEnabled && bgMusic.paused) {
+                bgMusic.currentTime = 0; // 從頭開始播放
+                bgMusic.play();
+            }
+            
+            // 重新初始化遊戲元素
+            createHealthBars();
+            createScoreDisplay();
+            startMonsterSpawning();
+            setupGameControls();
+        }
+
+        // 技能1：護盾
+        function activateShield() {
+            const moon = document.getElementById('moon');
+            const shield = document.createElement('div');
+            shield.className = 'shield';
+            document.body.appendChild(shield);
+
+            // 讓護盾跟隨太空站
+            const updateShieldPosition = () => {
+                const moonRect = moon.getBoundingClientRect();
+                shield.style.left = (moonRect.left - 25) + 'px';
+                shield.style.top = (moonRect.top - 25) + 'px';
+            };
+
+            const shieldInterval = setInterval(updateShieldPosition, 16);
+            updateShieldPosition();
+
+            // 20秒後移除護盾
+            setTimeout(() => {
+                clearInterval(shieldInterval);
+                shield.remove();
+            }, 20000);
+        }
+
+        // 技能2：強力光球
+        function shootPowerBullet() {
+            const moon = document.getElementById('moon');
+            const moonRect = moon.getBoundingClientRect();
+            const bullet = document.createElement('div');
+            bullet.className = 'power-bullet';
+            
+            const startX = moonRect.left + moonRect.width/2;
+            const startY = moonRect.top + moonRect.height/2;
+            bullet.style.left = startX + 'px';
+            bullet.style.top = startY + 'px';
+            document.body.appendChild(bullet);
+
+            const angle = Math.atan2(
+                event.clientY - startY,
+                event.clientX - startX
+            );
+
+            const speed = 8;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+
+            const moveInterval = setInterval(() => {
+                const currentX = parseFloat(bullet.style.left);
+                const currentY = parseFloat(bullet.style.top);
+                
+                bullet.style.left = (currentX + vx) + 'px';
+                bullet.style.top = (currentY + vy) + 'px';
+
+                // 檢查碰撞
+                document.querySelectorAll('.space-monster').forEach(monster => {
+                    if (checkCollision(bullet, monster)) {
+                        handleMonsterHit(monster, 15);
+                        bullet.remove();
+                        clearInterval(moveInterval);
+                    }
+                });
+
+                if (currentX < 0 || currentX > window.innerWidth || 
+                    currentY < 0 || currentY > window.innerHeight) {
+                    clearInterval(moveInterval);
+                    bullet.remove();
+                }
+            }, 16);
+        }
+
+        // 技能3：超級光球
+        function shootSuperBullet() {
+            const moon = document.getElementById('moon');
+            const moonRect = moon.getBoundingClientRect();
+            const bullet = document.createElement('div');
+            bullet.className = 'super-bullet';
+            
+            const startX = moonRect.left + moonRect.width/2;
+            const startY = moonRect.top + moonRect.height/2;
+            bullet.style.left = startX + 'px';
+            bullet.style.top = startY + 'px';
+            document.body.appendChild(bullet);
+
+            const angle = Math.atan2(
+                event.clientY - startY,
+                event.clientX - startX
+            );
+
+            const speed = 10;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+
+            const moveInterval = setInterval(() => {
+                const currentX = parseFloat(bullet.style.left);
+                const currentY = parseFloat(bullet.style.top);
+                
+                bullet.style.left = (currentX + vx) + 'px';
+                bullet.style.top = (currentY + vy) + 'px';
+
+                // 檢查碰撞
+                document.querySelectorAll('.space-monster').forEach(monster => {
+                    if (checkCollision(bullet, monster)) {
+                        handleMonsterHit(monster, 20);
+                        bullet.remove();
+                        clearInterval(moveInterval);
+                    }
+                });
+
+                if (currentX < 0 || currentX > window.innerWidth || 
+                    currentY < 0 || currentY > window.innerHeight) {
+                    clearInterval(moveInterval);
+                    bullet.remove();
+                }
+            }, 16);
+        }
+
+        // 子彈爆炸效果
+        function createBulletExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'bullet-explosion';
+            explosion.style.left = x + 'px';
+            explosion.style.top = y + 'px';
+            document.body.appendChild(explosion);
+            setTimeout(() => explosion.remove(), 300);
+        }
+
+        // 初始化遊戲
+        init();
+
+        function createStars() {
+            const colors = ['white', 'blue', 'purple', 'yellow', 'pink'];
+            const starCount = 100;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = `star star-${colors[Math.floor(Math.random() * colors.length)]}`;
+                star.style.left = Math.random() * window.innerWidth + 'px';
+                star.style.top = Math.random() * window.innerHeight + 'px';
+                document.body.appendChild(star);
+            }
+        }
+
+        // 添加技能冷卻提示
+        function createCooldownDisplay() {
+            const display = document.createElement('div');
+            display.className = 'cooldown-display';
+            display.innerHTML = `
+                <div class="skill-info">
+                    <div>1: 護盾 (25秒)</div>
+                    <div>2: 追蹤彈 (5秒)</div>
+                    <div>3: 散射彈 (8秒)</div>
+                </div>
+            `;
+            document.body.appendChild(display);
+        }
+
+        // 修改怪物的碰撞檢測
+        function checkMonsterCollisions() {
+            const moon = document.getElementById('moon');
+            const moonRect = moon.getBoundingClientRect();
+            const shield = document.querySelector('.shield');
+
+            document.querySelectorAll('.space-monster').forEach(monster => {
+                const monsterRect = monster.getBoundingClientRect();
+                
+                // 如果有護盾，怪物碰到護盾會被彈開，但不受傷
+                if (shield) {
+                    const shieldRect = shield.getBoundingClientRect();
+                    if (checkCollision(monster, shield)) {
+                        // 只彈開怪物，不造成傷害
+                        const angle = Math.atan2(
+                            monsterRect.top - moonRect.top,
+                            monsterRect.left - moonRect.left
+                        );
+                        monster.style.left = (monsterRect.left + Math.cos(angle) * 50) + 'px';
+                        monster.style.top = (monsterRect.top + Math.sin(angle) * 50) + 'px';
+                    }
+                }
+                // 如果沒有護盾，怪物碰到太空站會造成傷害
+                else if (checkCollision(monster, moon)) {
+                    updateHealth('player', 5);
+                    // 讓怪物被彈開
+                    const angle = Math.atan2(
+                        monsterRect.top - moonRect.top,
+                        monsterRect.left - moonRect.left
+                    );
+                    monster.style.left = (monsterRect.left + Math.cos(angle) * 50) + 'px';
+                    monster.style.top = (monsterRect.top + Math.sin(angle) * 50) + 'px';
+                }
+            });
+        }
+
+        // 在遊戲主循環中調用碰撞檢測
+        function gameLoop() {
+            if (gameState.isPlaying) {
+                checkMonsterCollisions();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+    </script>
+</body>
+</html>
